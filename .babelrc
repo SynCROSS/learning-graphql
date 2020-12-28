@@ -1,0 +1,4 @@
+{
+  // * Have to Install babel-preset-env, babel-preset-stage-3
+  "presets": ["env", "stage-3"]
+}
