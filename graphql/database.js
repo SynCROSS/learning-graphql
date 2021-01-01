@@ -45,6 +45,16 @@ export const addMovie = (name, score, summary) => {
   return newMovie;
 };
 
+export const deleteMovieById = id => {
+  const filteredMovie = movies.filter(movie => id !== movie.id);
+
+  if (movies.length > filteredMovie.length) {
+    movies = filteredMovie;
+    return true;
+  }
+  return false;
+};
+
 const isNull = parameter => {
   if (parameter === null || parameter === undefined) {
     return true;
