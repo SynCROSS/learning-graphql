@@ -1,10 +1,12 @@
-import { people, getPersonById } from './database';
+import { getMovies, getMovieById, addMovie } from './database';
 
 const resolvers = {
   Query: {
-    people: () => people,
-    // * _ means ignoring Present Object
-    person: (_, { id }) => getPersonById(id),
+    movies: () => getMovies(),
+    movie: (_, { id }) => getMovieById(id),
+  },
+  Mutation: {
+    addMovie: (_, { name, score, summary }) => addMovie(name, score, summary),
   },
 };
 
