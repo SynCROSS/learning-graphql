@@ -1,19 +1,23 @@
-import fetch from 'node-fetch';
+// import fetch from 'node-fetch';
+import axios from 'axios';
 
-const API_URL = 'https://yts.mx/api/v2/list_movies.json';
+const BASE_URL = 'https://yts.mx/api/v2/';
+const LIST_MOVIE_URL = `${BASE_URL}list_movies.json`;
+const MOVIE_DETAILS_URL = `${BASE_URL}movie_details.json`;
+const MOVIE_SUGGESTIONS_URL = `${BASE_URL}movie_suggestions.json`;
 
-export const getMovies = (
-  limit = 20,
-  page = 1,
-  quality = 'All',
-  minimum_rating = 0.0,
-  query_term = '0',
-  genre = ['All'],
-  sort_by = 'date_added',
-  order_by = 'desc',
-  with_rt_ratings = 'false',
+export const getMovies = async (
+  limit,
+  page,
+  quality,
+  minimum_rating,
+  query_term,
+  genre,
+  sort_by,
+  order_by,
+  with_rt_ratings,
 ) => {
-  let request_url = isValidValue(
+  const validParams = isValidValue(
     limit,
     page,
     quality,
@@ -25,14 +29,30 @@ export const getMovies = (
     with_rt_ratings,
   );
 
-  return fetch(`${request_url}`)
-    .then(res => res.json())
-    .then(json => json.data.movies);
+  const {
+    data: {
+      data: { movies },
+    },
+  } = await axios(LIST_MOVIE_URL, {
+    params: {
+      limit: validParams.limit,
+      page: validParams.page,
+      quality: validParams.quality,
+      minimum_rating: validParams.minimum_rating,
+      query_term: validParams.query_term,
+      genre: validParams.genre,
+      sort_by: validParams.sort_by,
+      order_by: validParams.order_by,
+      with_rt_ratings: validParams.with_rt_ratings,
+    },
+  });
+
+  return movies;
 };
 
 // * I think Babel probably doesn't support the '??' operator,
 // * So I used this function instead.
-const isNull = parameter => {
+const isNullOrUndefined = parameter => {
   if (parameter === null || parameter === undefined) {
     return true;
   }
@@ -50,37 +70,42 @@ const isValidValue = (
   order_by,
   with_rt_ratings,
 ) => {
-  let request_url = API_URL + '?';
-
-  if (limit >= 1 && limit <= 50) {
-    request_url += `&limit=${limit}`;
+  if (isNullOrUndefined(limit) && (limit < 1 || limit > 50)) {
+    limit = 20;
   }
 
-  if (page * 1 === page) {
-    request_url += `&page=${page}`;
+  if (isNullOrUndefined(page) && page * 1 !== page) {
+    page = 1;
   }
 
   switch (
-    quality === 'All' ||
-    quality === '720p' ||
-    quality === '1080p' ||
-    quality === '2160p' ||
-    quality === '3D'
+    isNullOrUndefined(quality) ||
+    (quality !== 'All' &&
+      quality !== '720p' &&
+      quality !== '1080p' &&
+      quality !== '2160p' &&
+      quality !== '3D')
   ) {
     case true:
-      request_url += `&quality=${quality}`;
+      quality = 'All';
       break;
     default:
       break;
   }
 
-  if (minimum_rating >= 0 && minimum_rating <= 9) {
-    request_url += `&minimum_rating=${minimum_rating}`;
+  if (
+    isNullOrUndefined(minimum_rating) &&
+    (minimum_rating < 0 || minimum_rating > 9)
+  ) {
+    minimum_rating = 0.0;
   }
 
-  request_url += `&query_term=${query_term}`;
+  if (isNullOrUndefined(query_term)) {
+    query_term = '0';
+  }
 
   const genres = [
+    'All',
     'Action',
     'Adventure',
     'Animation',
@@ -107,48 +132,65 @@ const isValidValue = (
     'Western',
   ];
 
-  for (const movieGenre of genres) {
-    if (genre === 'All') {
+  if (!isNullOrUndefined(genre)) {
+    for (const g of genre) {
+      for (const movieGenre of genres) {
+        if (g === movieGenre) {
+          break;
+        }
+      }
+    }
+  } else genre = ['All'];
+
+  switch (
+    isNullOrUndefined(sort_by) ||
+    (sort_by !== 'title' &&
+      sort_by !== 'year' &&
+      sort_by !== 'rating' &&
+      sort_by !== 'peers' &&
+      sort_by !== 'seeds' &&
+      sort_by !== 'download_count' &&
+      sort_by !== 'like_count' &&
+      sort_by !== 'date_added')
+  ) {
+    case true:
+      sort_by = 'date_added';
       break;
-    }
-    if (genre === movieGenre) {
-      request_url += `&genre=${genre}`;
-    }
+    default:
+      break;
   }
 
   switch (
-    sort_by === 'title' ||
-    sort_by === 'year' ||
-    sort_by === 'rating' ||
-    sort_by === 'peers' ||
-    sort_by === 'seeds' ||
-    sort_by === 'download_count' ||
-    sort_by === 'like_count' ||
-    sort_by === 'date_added'
+    isNullOrUndefined(order_by) ||
+    (order_by !== 'desc' && order_by !== 'asc')
   ) {
     case true:
-      request_url += `&sort_by=${sort_by}`;
+      order_by = 'desc';
       break;
     default:
       break;
   }
 
-  switch (order_by) {
-    case 'desc':
-    case 'asc':
-      request_url += `&order_by=${order_by}`;
-      break;
-    default:
-      break;
-  }
-
-  switch (with_rt_ratings === 'true' || with_rt_ratings === 'false') {
+  switch (
+    isNullOrUndefined(with_rt_ratings) ||
+    (with_rt_ratings !== 'true' && with_rt_ratings !== 'false')
+  ) {
     case true:
-      request_url += `&with_rt_ratings=${with_rt_ratings}`;
+      with_rt_ratings = 'false';
       break;
     default:
       break;
   }
 
-  return request_url;
+  return {
+    limit,
+    page,
+    quality,
+    minimum_rating,
+    query_term,
+    genre,
+    sort_by,
+    order_by,
+    with_rt_ratings,
+  };
 };
