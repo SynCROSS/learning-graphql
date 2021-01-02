@@ -1,17 +1,23 @@
 type Movie {
   id: Int!
-  name: String!
-  score: Int
+  title: String!
+  rating: Float
+  genres: [String]
   summary: String
+  background_image_original: String
+  date_uploaded: String!
 }
 
 type Query {
-  movies: [Movie]!
-  movie(id: Int!): Movie
-}
-
-type Mutation {
-  addMovie(name: String!, score: Int, summary: String): Movie
-  # updateMovie(name: String!, score: Int, summary: String): Movie
-  deleteMovieById(id: Int!): Boolean!
+  movies(
+    limit: Int
+    page: Int
+    quality: String
+    minimum_rating: Float
+    query_term: String
+    genre: [String]
+    sort_by: String
+    order_by: String
+    with_rt_ratings: String
+  ): [Movie]!
 }
