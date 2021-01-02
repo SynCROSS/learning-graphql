@@ -17,7 +17,7 @@ export const getMovies = async (
   order_by,
   with_rt_ratings,
 ) => {
-  const validParams = isValidValue(
+  const validParams = isValidValueForGetMovies(
     limit,
     page,
     quality,
@@ -50,6 +50,70 @@ export const getMovies = async (
   return movies;
 };
 
+export const getMovieById = async (
+  movie_id = null,
+  with_images = false,
+  with_cast = false,
+) => {
+  switch (movie_id) {
+    case null:
+    case movie_id * 1:
+      break;
+    default:
+      movie_id = null;
+      break;
+  }
+
+  switch (with_images) {
+    case true:
+    case false:
+      break;
+    default:
+      with_images = false;
+      break;
+  }
+
+  switch (with_cast) {
+    case true:
+    case false:
+      break;
+    default:
+      with_cast = false;
+      break;
+  }
+
+  const {
+    data: {
+      data: { movie },
+    },
+  } = await axios(MOVIE_DETAILS_URL, {
+    params: { movie_id, with_images, with_cast },
+  });
+
+  return movie;
+};
+
+// * Why getMovieSuggestions requires movie_id is like Youtube Algorithm.
+// * If who watch the Movie, Get That Movie's Id and Show related Movies using that Id
+export const getMovieSuggestions = async movie_id => {
+  switch (movie_id) {
+    case null:
+    case movie_id * 1:
+      break;
+    default:
+      movie_id = null;
+      break;
+  }
+
+  const {
+    data: {
+      data: { movies },
+    },
+  } = await axios(MOVIE_SUGGESTIONS_URL, { params: { movie_id } });
+
+  return movies;
+};
+
 // * I think Babel probably doesn't support the '??' operator,
 // * So I used this function instead.
 const isNullOrUndefined = parameter => {
@@ -59,7 +123,7 @@ const isNullOrUndefined = parameter => {
   return false;
 };
 
-const isValidValue = (
+const isValidValueForGetMovies = (
   limit,
   page,
   quality,
@@ -173,10 +237,10 @@ const isValidValue = (
 
   switch (
     isNullOrUndefined(with_rt_ratings) ||
-    (with_rt_ratings !== 'true' && with_rt_ratings !== 'false')
+    (with_rt_ratings !== true && with_rt_ratings !== false)
   ) {
     case true:
-      with_rt_ratings = 'false';
+      with_rt_ratings = false;
       break;
     default:
       break;

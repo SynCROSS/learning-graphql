@@ -18,6 +18,8 @@ type Query {
     genre: [String]
     sort_by: String
     order_by: String
-    with_rt_ratings: String
+    with_rt_ratings: Boolean
   ): [Movie]!
+  movie(movie_id: Int!, with_images: Boolean, with_cast: Boolean): Movie
+  suggestions(movie_id: Int!): [Movie]
 }
